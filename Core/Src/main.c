@@ -50,6 +50,7 @@ CAN_HandleTypeDef hcan2;
 SPI_HandleTypeDef hspi2;
 
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim14;
 
 /* USER CODE BEGIN PV */
 
@@ -88,6 +89,7 @@ static void MX_TIM2_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_CAN2_Init(void);
 static void MX_CAN1_Init(void);
+static void MX_TIM14_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -98,9 +100,6 @@ static void MX_CAN1_Init(void);
 
 void HAL_CAN_TxMailbox0CompleteCallback (CAN_HandleTypeDef * hcan)
 {
-	HAL_GPIO_TogglePin(GPIOD, LED_Red0_Pin);
-	DELAY(2500000);
-
 	PLC_Transmit_Flag = 1;
 }
 
@@ -113,9 +112,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     	{
     	case 0x400:
     		MCP_Transmit_Flag = 0;
-
-			snprintf((char *)OutputBuffer, 100, "Received data is: %s \r\n", RxData);
-			CDC_Transmit_FS(OutputBuffer, strlen((char *)OutputBuffer));
 
 			TxHeader1.StdId = 0x300;
 			TxHeader1.ExtId = RxHeader.ExtId;
@@ -135,9 +131,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     	case 0x401:
     		MCP_Transmit_Flag = 0;
 
-			snprintf((char *)OutputBuffer, 100, "Received data is: %s \r\n", RxData);
-			CDC_Transmit_FS(OutputBuffer, strlen((char *)OutputBuffer));
-
 			TxHeader2.StdId = 0x301;
 			TxHeader2.ExtId = RxHeader.ExtId;
 			TxHeader2.RTR   = RxHeader.RTR;
@@ -156,9 +149,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     	case 0x300:
     		MCP_Transmit_Flag = 0;
 
-			snprintf((char *)OutputBuffer, 100, "Received data is: %s \r\n", RxData);
-			CDC_Transmit_FS(OutputBuffer, strlen((char *)OutputBuffer));
-
 			TxHeader1.StdId = 0x412;
 			TxHeader1.ExtId = RxHeader.ExtId;
 			TxHeader1.RTR   = RxHeader.RTR;
@@ -168,7 +158,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 
 			for(uint8_t i = 0; i < TxHeader1.DLC; i++)
 			{
-				TxData1[i] += 2;
+				TxData1[i] = RxData[i] + 2;
 			}
 
 			MCP_Receiving_State--;
@@ -177,9 +167,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 			break;
     	case 0x301:
     		MCP_Transmit_Flag = 0;
-
-			snprintf((char *)OutputBuffer, 100, "Received data is: %s \r\n", RxData);
-			CDC_Transmit_FS(OutputBuffer, strlen((char *)OutputBuffer));
 
 			TxHeader2.StdId = 0x258;
 			TxHeader2.ExtId = RxHeader.ExtId;
@@ -190,7 +177,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 
 			for(uint8_t i = 0; i < TxHeader2.DLC; i++)
 			{
-				TxData2[i] += 2;
+				TxData2[i] = RxData[i] + 2;
 			}
 
 			MCP_Receiving_State--;
@@ -217,6 +204,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if((htim == &htim2) && (PLC_Transmit_Flag == 1))
 	{
+		if(PLC_Transmit_Flag == 1)
+		{
+			 HAL_GPIO_TogglePin(GPIOD, LED_Green0_Pin);
+		}
 		if(CANSPI_Receive(&MCP2515rxMessageFirst, MCP2515_FIRST))
 		{
 		  MCP_Receiving_State++;
@@ -233,11 +224,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		  MCP2515txMessageFirst.frame.data5  = MCP2515rxMessageFirst.frame.data5 + 1;
 		  MCP2515txMessageFirst.frame.data6  = MCP2515rxMessageFirst.frame.data6 + 1;
 		  MCP2515txMessageFirst.frame.data7  = MCP2515rxMessageFirst.frame.data7 + 1;
-
-		  if(CANSPI_Transmit(&MCP2515txMessageFirst, MCP2515_FIRST))
-		  {
-			  MCP_Transmit_Flag = 1;
-		  }
 		}
 
 		if(CANSPI_Receive(&MCP2515rxMessageSecond, MCP2515_SECOND))
@@ -256,18 +242,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		  MCP2515txMessageSecond.frame.data5  = MCP2515rxMessageSecond.frame.data5 + 1;
 		  MCP2515txMessageSecond.frame.data6  = MCP2515rxMessageSecond.frame.data6 + 1;
 		  MCP2515txMessageSecond.frame.data7  = MCP2515rxMessageSecond.frame.data7 + 1;
-
-		  if(CANSPI_Transmit(&MCP2515txMessageSecond, MCP2515_SECOND))
-		  {
-		      MCP_Transmit_Flag = 1;
-		  }
 		}
-		if(MCP_Receiving_State == 2)
+		/* MCP2515_1 and MCP2515_2 messages transmitting */
+		if((CANSPI_Transmit(&MCP2515txMessageFirst, MCP2515_FIRST)) &&
+		   (CANSPI_Transmit(&MCP2515txMessageSecond, MCP2515_SECOND)))
 		{
-			 HAL_GPIO_TogglePin(GPIOD, LED_Green0_Pin);
-			 DELAY(2500000);
-		}
+			  MCP_Transmit_Flag = 1;
 
+			  HAL_GPIO_TogglePin(GPIOD, LED_Red0_Pin);
+		}
+	}
+	else if(htim == &htim14)
+	{
+		snprintf((char *)OutputBuffer, 100, "Last data received by CAN1 or CAN2 is: ID %d DATA %s \r\n", (uint16_t)RxHeader.StdId, RxData);
+		CDC_Transmit_FS(OutputBuffer, strlen((char *)OutputBuffer));
 	}
 }
 /* USER CODE END 0 */
@@ -305,34 +293,20 @@ int main(void)
   MX_SPI2_Init();
   MX_CAN2_Init();
   MX_CAN1_Init();
+  MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
 
   /* MCP2515 initializing */
   CANSPI_Initialize(MCP2515_FIRST);
   CANSPI_Initialize(MCP2515_SECOND);
 
-  /* TIM2 Starting */
+  /* TIM2 and TIM14 Interrupt Mode Activating */
   HAL_TIM_Base_Start_IT(&htim2);
+  HAL_TIM_Base_Start_IT(&htim14);
 
   /* CAN Starting */
   HAL_CAN_Start(&hcan1);
   HAL_CAN_Start(&hcan2);
-
-
-  /* Messages Configuration */
-  TxHeader1.StdId = 0x412;
-  TxHeader1.ExtId = 0;
-  TxHeader1.RTR   = CAN_RTR_DATA;
-  TxHeader1.IDE   = CAN_ID_STD;
-  TxHeader1.DLC   = 8;
-  TxHeader1.TransmitGlobalTime = 0;
-
-  TxHeader2.StdId = 0x258;
-  TxHeader2.ExtId = 0;
-  TxHeader2.RTR   = CAN_RTR_DATA;
-  TxHeader2.IDE   = CAN_ID_STD;
-  TxHeader2.DLC   = 8;
-  TxHeader2.TransmitGlobalTime = 0;
 
   /* Activating CAN notifications */
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_TX_MAILBOX_EMPTY |
@@ -348,6 +322,21 @@ int main(void)
 									   CAN_IT_ERROR |
 									   CAN_IT_BUSOFF |
 		                               CAN_IT_LAST_ERROR_CODE);
+
+  /* Messages Configuration */
+  TxHeader1.StdId = 0x412;
+  TxHeader1.ExtId = 0;
+  TxHeader1.RTR   = CAN_RTR_DATA;
+  TxHeader1.IDE   = CAN_ID_STD;
+  TxHeader1.DLC   = 8;
+  TxHeader1.TransmitGlobalTime = 0;
+
+  TxHeader2.StdId = 0x258;
+  TxHeader2.ExtId = 0;
+  TxHeader2.RTR   = CAN_RTR_DATA;
+  TxHeader2.IDE   = CAN_ID_STD;
+  TxHeader2.DLC   = 8;
+  TxHeader2.TransmitGlobalTime = 0;
 
   /* CAN2 to MCP2515_FIRST and MCP2515_SECOND messages transmitting */
 
@@ -440,7 +429,7 @@ static void MX_CAN1_Init(void)
   hcan1.Init.AutoWakeUp = DISABLE;
   hcan1.Init.AutoRetransmission = ENABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
-  hcan1.Init.TransmitFifoPriority = DISABLE;
+  hcan1.Init.TransmitFifoPriority = ENABLE;
   if (HAL_CAN_Init(&hcan1) != HAL_OK)
   {
     Error_Handler();
@@ -494,7 +483,7 @@ static void MX_CAN2_Init(void)
   hcan2.Init.AutoWakeUp = DISABLE;
   hcan2.Init.AutoRetransmission = ENABLE;
   hcan2.Init.ReceiveFifoLocked = DISABLE;
-  hcan2.Init.TransmitFifoPriority = DISABLE;
+  hcan2.Init.TransmitFifoPriority = ENABLE;
   if (HAL_CAN_Init(&hcan2) != HAL_OK)
   {
     Error_Handler();
@@ -601,6 +590,37 @@ static void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief TIM14 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM14_Init(void)
+{
+
+  /* USER CODE BEGIN TIM14_Init 0 */
+
+  /* USER CODE END TIM14_Init 0 */
+
+  /* USER CODE BEGIN TIM14_Init 1 */
+
+  /* USER CODE END TIM14_Init 1 */
+  htim14.Instance = TIM14;
+  htim14.Init.Prescaler = 4799;
+  htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim14.Init.Period = 9999;
+  htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM14_Init 2 */
+
+  /* USER CODE END TIM14_Init 2 */
 
 }
 

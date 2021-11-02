@@ -28,6 +28,8 @@ void CANSPI_Sleep(uint8_t CS)
 /* CAN initializing */
 bool CANSPI_Initialize(uint8_t CS)
 {
+  MCP2515_Reset(CS);
+
   RXF0 RXF0reg;
   RXF1 RXF1reg;
   RXF2 RXF2reg;
@@ -40,97 +42,96 @@ bool CANSPI_Initialize(uint8_t CS)
   switch(CS)
   {
 
-  case MCP2515_FIRST:
+    case MCP2515_FIRST:
 
-	  /* Rx Mask values */
-	  RXM0reg.RXM0SIDH = 0xFF;
-	  RXM0reg.RXM0SIDL = 0xE0;
-	  RXM0reg.RXM0EID8 = 0x00;
-	  RXM0reg.RXM0EID0 = 0x00;
+  	  /* Rx Mask values */
+  	  RXM0reg.RXM0SIDH = 0xFF;
+  	  RXM0reg.RXM0SIDL = 0xE0;
+  	  RXM0reg.RXM0EID8 = 0x00;
+  	  RXM0reg.RXM0EID0 = 0x00;
 
-	  RXM1reg.RXM1SIDH = 0xFF;
-	  RXM1reg.RXM1SIDL = 0xE0;
-	  RXM1reg.RXM1EID8 = 0x00;
-	  RXM1reg.RXM1EID0 = 0x00;
+  	  RXM1reg.RXM1SIDH = 0xFF;
+  	  RXM1reg.RXM1SIDL = 0xE0;
+  	  RXM1reg.RXM1EID8 = 0x00;
+  	  RXM1reg.RXM1EID0 = 0x00;
 
-	  /* Rx Filter values */
-	  RXF0reg.RXF0SIDH = 0x82;
-	  RXF0reg.RXF0SIDL = 0x40;      //Starndard Filter
-	  RXF0reg.RXF0EID8 = 0x00;
-	  RXF0reg.RXF0EID0 = 0x00;
+  	  /* Rx Filter values */
+  	  RXF0reg.RXF0SIDH = 0x82;
+  	  RXF0reg.RXF0SIDL = 0x40;      //Starndard Filter
+  	  RXF0reg.RXF0EID8 = 0x00;
+  	  RXF0reg.RXF0EID0 = 0x00;
 
-	  RXF1reg.RXF1SIDH = 0x82;
-	  RXF1reg.RXF1SIDL = 0x40;      //Exntended Filter
-	  RXF1reg.RXF1EID8 = 0x00;
-	  RXF1reg.RXF1EID0 = 0x00;
+  	  RXF1reg.RXF1SIDH = 0x82;
+  	  RXF1reg.RXF1SIDL = 0x40;      //Exntended Filter
+  	  RXF1reg.RXF1EID8 = 0x00;
+  	  RXF1reg.RXF1EID0 = 0x00;
 
-	  RXF2reg.RXF2SIDH = 0x00;
-	  RXF2reg.RXF2SIDL = 0x00;
-	  RXF2reg.RXF2EID8 = 0x00;
-	  RXF2reg.RXF2EID0 = 0x00;
+  	  RXF2reg.RXF2SIDH = 0x00;
+  	  RXF2reg.RXF2SIDL = 0x00;
+  	  RXF2reg.RXF2EID8 = 0x00;
+  	  RXF2reg.RXF2EID0 = 0x00;
 
-	  RXF3reg.RXF3SIDH = 0x00;
-	  RXF3reg.RXF3SIDL = 0x00;
-	  RXF3reg.RXF3EID8 = 0x00;
-	  RXF3reg.RXF3EID0 = 0x00;
+  	  RXF3reg.RXF3SIDH = 0x00;
+  	  RXF3reg.RXF3SIDL = 0x00;
+  	  RXF3reg.RXF3EID8 = 0x00;
+  	  RXF3reg.RXF3EID0 = 0x00;
 
-	  RXF4reg.RXF4SIDH = 0x00;
-	  RXF4reg.RXF4SIDL = 0x00;
-	  RXF4reg.RXF4EID8 = 0x00;
-	  RXF4reg.RXF4EID0 = 0x00;
+  	  RXF4reg.RXF4SIDH = 0x00;
+  	  RXF4reg.RXF4SIDL = 0x00;
+  	  RXF4reg.RXF4EID8 = 0x00;
+  	  RXF4reg.RXF4EID0 = 0x00;
 
-	  RXF5reg.RXF5SIDH = 0x00;
-	  RXF5reg.RXF5SIDL = 0x00;
-	  RXF5reg.RXF5EID8 = 0x00;
-	  RXF5reg.RXF5EID0 = 0x00;
+  	  RXF5reg.RXF5SIDH = 0x00;
+  	  RXF5reg.RXF5SIDL = 0x00;
+  	  RXF5reg.RXF5EID8 = 0x00;
+  	  RXF5reg.RXF5EID0 = 0x00;
 
-	  break;
-  case MCP2515_SECOND:
+  	  break;
+    case MCP2515_SECOND:
 
-	  /* Rx Mask values */
-	  RXM0reg.RXM0SIDH = 0xFF;
-	  RXM0reg.RXM0SIDL = 0xE0;
-	  RXM0reg.RXM0EID8 = 0x00;
-	  RXM0reg.RXM0EID0 = 0x00;
+  	  /* Rx Mask values */
+  	  RXM0reg.RXM0SIDH = 0xFF;
+  	  RXM0reg.RXM0SIDL = 0xE0;
+  	  RXM0reg.RXM0EID8 = 0x00;
+  	  RXM0reg.RXM0EID0 = 0x00;
 
-	  RXM1reg.RXM1SIDH = 0xFF;
-	  RXM1reg.RXM1SIDL = 0xE0;
-	  RXM1reg.RXM1EID8 = 0x00;
-	  RXM1reg.RXM1EID0 = 0x00;
+  	  RXM1reg.RXM1SIDH = 0xFF;
+  	  RXM1reg.RXM1SIDL = 0xE0;
+  	  RXM1reg.RXM1EID8 = 0x00;
+  	  RXM1reg.RXM1EID0 = 0x00;
 
-	  /* Rx Filter values */
-	  RXF0reg.RXF0SIDH = 0x4B;
-	  RXF0reg.RXF0SIDL = 0x00;      //Starndard Filter
-	  RXF0reg.RXF0EID8 = 0x00;
-	  RXF0reg.RXF0EID0 = 0x00;
+  	  /* Rx Filter values */
+  	  RXF0reg.RXF0SIDH = 0x4B;
+  	  RXF0reg.RXF0SIDL = 0x00;      //Starndard Filter
+  	  RXF0reg.RXF0EID8 = 0x00;
+  	  RXF0reg.RXF0EID0 = 0x00;
 
-	  RXF1reg.RXF1SIDH = 0x4B;
-	  RXF1reg.RXF1SIDL = 0x00;      //Exntended Filter
-	  RXF1reg.RXF1EID8 = 0x00;
-	  RXF1reg.RXF1EID0 = 0x00;
+  	  RXF1reg.RXF1SIDH = 0x4B;
+  	  RXF1reg.RXF1SIDL = 0x00;      //Exntended Filter
+  	  RXF1reg.RXF1EID8 = 0x00;
+  	  RXF1reg.RXF1EID0 = 0x00;
 
-	  RXF2reg.RXF2SIDH = 0x00;
-	  RXF2reg.RXF2SIDL = 0x00;
-	  RXF2reg.RXF2EID8 = 0x00;
-	  RXF2reg.RXF2EID0 = 0x00;
+  	  RXF2reg.RXF2SIDH = 0x00;
+  	  RXF2reg.RXF2SIDL = 0x00;
+  	  RXF2reg.RXF2EID8 = 0x00;
+  	  RXF2reg.RXF2EID0 = 0x00;
 
-	  RXF3reg.RXF3SIDH = 0x00;
-	  RXF3reg.RXF3SIDL = 0x00;
-	  RXF3reg.RXF3EID8 = 0x00;
-	  RXF3reg.RXF3EID0 = 0x00;
+  	  RXF3reg.RXF3SIDH = 0x00;
+  	  RXF3reg.RXF3SIDL = 0x00;
+  	  RXF3reg.RXF3EID8 = 0x00;
+  	  RXF3reg.RXF3EID0 = 0x00;
 
-	  RXF4reg.RXF4SIDH = 0x00;
-	  RXF4reg.RXF4SIDL = 0x00;
-	  RXF4reg.RXF4EID8 = 0x00;
-	  RXF4reg.RXF4EID0 = 0x00;
+  	  RXF4reg.RXF4SIDH = 0x00;
+  	  RXF4reg.RXF4SIDL = 0x00;
+  	  RXF4reg.RXF4EID8 = 0x00;
+  	  RXF4reg.RXF4EID0 = 0x00;
 
-	  RXF5reg.RXF5SIDH = 0x00;
-	  RXF5reg.RXF5SIDL = 0x00;
-	  RXF5reg.RXF5EID8 = 0x00;
-	  RXF5reg.RXF5EID0 = 0x00;
-	  break;
+  	  RXF5reg.RXF5SIDH = 0x00;
+  	  RXF5reg.RXF5SIDL = 0x00;
+  	  RXF5reg.RXF5EID8 = 0x00;
+  	  RXF5reg.RXF5EID0 = 0x00;
+  	  break;
   }
-
 
   /* MCP2515 initialization, SPI communication status check */
   if(!MCP2515_Initialize(CS))
